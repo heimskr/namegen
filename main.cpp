@@ -10,10 +10,9 @@ size_t randrange(size_t low, size_t high);
 size_t randrange(size_t high);
 
 namespace NameGen {
-	using wregex = std::basic_regex<wchar_t>;
-
 	struct Phonemes {
 		std::wstring C = L"ptkmnls", V = L"aeiou", S = L"s", F = L"mn", L = L"rl";
+		std::wstring operator[](wchar_t) const;
 	};
 
 	struct Orthography {
@@ -25,7 +24,7 @@ namespace NameGen {
 		Phonemes phonemes;
 		std::wstring structure = L"CVC";
 		size_t exponent = 2;
-		std::vector<wregex> restricts;
+		std::vector<std::wregex> restricts;
 		Orthography cortho, vortho;
 		bool noortho = true, nomorph = true, nowordpool = true;
 		size_t minsyll = 1, maxsyll = 1;
@@ -52,6 +51,17 @@ namespace NameGen {
 		{L'U', L"ú"},
 	}};
 
+	std::wstring Phonemes::operator[](wchar_t type) const {
+		switch (type) {
+			case L'C': return C;
+			case L'V': return V;
+			case L'S': return S;
+			case L'F': return F;
+			case L'L': return L;
+			default: throw std::invalid_argument("Invalid argument to Phonemes::operator[]");
+		}
+	}
+
 	template <typename T>
 	std::vector<T> shuffled(std::vector<T> vector) {
 		for (size_t i = vector.size() - 1; 0 < i; --i)
@@ -59,8 +69,8 @@ namespace NameGen {
 		return vector;
 	}
 
-	template <template <typename S> class C, typename T>
-	T & choose(const C<T> &container, size_t exponent = 1) {
+	template <template <typename...> class C, typename... TArgs, typename T>
+	const T & choose(const C<T, TArgs...> &container, size_t exponent = 1) {
 		return container[floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size())];
 	}
 
@@ -95,6 +105,56 @@ namespace NameGen {
 				s += c;
 		}
 		return s;
+	}
+
+	std::wstring makeSyllable(const Language &language) {
+		for (;;) {
+			std::wstring syllable;
+			for (size_t i = 0; i < language.structure.size(); ++i) {
+				wchar_t ptype = language.structure[i];
+				if (language.structure[i + 1] == L'?') {
+					++i;
+					if (rand() % 2 == 0)
+						continue;
+				}
+				syllable += choose(language.phonemes[ptype], language.exponent);
+			}
+			bool bad = false;
+			for (size_t i = 0; i < language.restricts.size(); ++i)
+				if (std::regex_match(syllable, language.restricts[i])) {
+					bad = true;
+					break;
+				}
+			if (bad)
+				continue;
+			return spell(language, syllable);
+		}
+	}
+
+	std::wstring getMorpheme(Language &language, const std::string &key = "") {
+		if (language.nomorph)
+			return makeSyllable(language);
+		std::wstring list;
+		if (language.morphemes.count(key) != 0)
+			list = language.morphemes.at(key);
+		size_t extras = key.empty()? 10 : 1;
+		for (;;) {
+			size_t n = randrange(list.size() + extras);
+			if (n < list.size())
+				return std::wstring(1, list[n]);
+			std::wstring morph = makeSyllable(language);
+			bool bad = false;
+			for (const std::pair<const std::string, std::wstring> &pair: language.morphemes)
+				if (pair.second.find(morph) != std::wstring::npos) {
+					bad = true;
+					break;
+				}
+			if (bad)
+				continue;
+			list += morph;
+			language.morphemes[key] = list;
+			return morph;
+		}
 	}
 }
 

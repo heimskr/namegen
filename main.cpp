@@ -38,7 +38,7 @@ namespace NameGen {
 		Orthography cortho, vortho;
 		bool noortho = true, nomorph = true, nowordpool = true;
 		size_t minsyll = 1, maxsyll = 1;
-		std::unordered_map<std::string, std::wstring> morphemes, words;
+		std::unordered_map<std::string, std::vector<std::wstring>> morphemes, words;
 		std::vector<std::wstring> names;
 		std::wstring joiner = L" ";
 		size_t maxchar = 12, minchar = 5;
@@ -271,6 +271,7 @@ namespace NameGen {
 				}
 			if (bad)
 				continue;
+			std::cout << "\e[2;34msyllable[" << convert(syllable) << "]\e[0m\n";
 			return spell(language, syllable);
 		}
 	}
@@ -278,25 +279,25 @@ namespace NameGen {
 	std::wstring getMorpheme(Language &language, const std::string &key = "") {
 		if (language.nomorph)
 			return makeSyllable(language);
-		std::wstring list;
+		std::vector<std::wstring> vec;
 		if (language.morphemes.count(key) != 0)
-			list = language.morphemes.at(key);
+			vec = language.morphemes.at(key);
 		size_t extras = key.empty()? 10 : 1;
 		for (;;) {
-			size_t n = randrange(list.size() + extras);
-			if (n < list.size())
-				return std::wstring(1, list.at(n));
+			size_t n = randrange(vec.size() + extras);
+			if (n < vec.size())
+				return vec.at(n);
 			std::wstring morph = makeSyllable(language);
 			bool bad = false;
-			for (const std::pair<const std::string, std::wstring> &pair: language.morphemes)
-				if (pair.second.find(morph) != std::wstring::npos) {
+			for (const std::pair<const std::string, std::vector<std::wstring>> &pair: language.morphemes)
+				if (std::find(pair.second.begin(), pair.second.end(), morph) != pair.second.end()) {
 					bad = true;
 					break;
 				}
 			if (bad)
 				continue;
-			list += morph;
-			language.morphemes[key] = list;
+			vec.push_back(morph);
+			language.morphemes[key] = vec;
 			return morph;
 		}
 	}
@@ -309,26 +310,29 @@ namespace NameGen {
 		keys.at(randrange(nsylls)) = key;
 		for (size_t i = 0; i < nsylls; ++i)
 			w += getMorpheme(language, keys.at(i));
+		std::cout << "\e[2mword[" << convert(w) << "]\e[0m\n";
 		return w;
 	}
 
 	std::wstring getWord(Language &language, const std::string &key = "") {
-		std::wstring ws = language.words.count(key) == 0? L"" : language.words.at(key);
+		std::vector<std::wstring> ws;
+		if (language.words.count(key) != 0)
+			ws = language.words.at(key);
 		size_t extras = key.empty()? 3 : 2;
 		for (;;) {
 			size_t n = randrange(ws.size() + extras);
 			if (n < ws.size())
-				return std::wstring(1, ws.at(n));
+				return ws.at(n);
 			std::wstring w = makeWord(language, key);
 			bool bad = false;
-			for (const std::pair<const std::string, std::wstring> &pair: language.words)
-				if (pair.second.find(w) != std::wstring::npos) {
+			for (const std::pair<const std::string, std::vector<std::wstring>> &pair: language.words)
+				if (std::find(pair.second.begin(), pair.second.end(), w) != pair.second.end()) {
 					bad = true;
 					break;
 				}
 			if (bad)
 				continue;
-			ws += w;
+			ws.push_back(w);
 			language.words[key] = ws;
 			return w;
 		}
@@ -338,7 +342,7 @@ namespace NameGen {
 		if (language.genitive.empty())
 			language.genitive = getMorpheme(language, "of");
 		if (language.definite.empty())
-			language.definite = getMorpheme(language, "the");
+			language.definite = capitalize(getMorpheme(language, "the"));
 		for (;;) {
 			std::wstring name;
 			if (rand() % 2 == 0) {
@@ -348,6 +352,7 @@ namespace NameGen {
 				std::wstring w2 = capitalize(getWord(language, rand() % 10 < 6? key : ""));
 				if (w1 == w2)
 					continue;
+				std::cout << "\e[2mw1[" << convert(w1) << "], w2[" << convert(w2) << "]\e[0m\n";
 				if (rand() % 2 == 1)
 					name = join({w1, w2}, language.joiner);
 				else
@@ -355,6 +360,7 @@ namespace NameGen {
 			}
 			if (rand() % 10 < 1)
 				name = join({language.definite, name}, language.joiner);
+			std::cout << "\e[2;32mname[" << convert(name) << "]\e[0m\n";
 			if (name.size() < language.minchar || language.maxchar < name.size())
 				continue;
 			bool used = false;
@@ -403,7 +409,7 @@ namespace NameGen {
 int main() {
 	srand(time(nullptr));
 	NameGen::Language random = NameGen::makeRandomLanguage();
-	for (size_t i = 0; i < 32; ++i)
+	for (size_t i = 0; i < 10; ++i)
 		std::cout << NameGen::makeName(random) << "\n";
 }
 #endif

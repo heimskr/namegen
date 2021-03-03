@@ -6,9 +6,6 @@
 
 #define INCLUDE_MAIN
 
-size_t randrange(size_t low, size_t high);
-size_t randrange(size_t high);
-
 namespace NameGen {
 	struct Phonemes {
 		std::wstring C = L"ptkmnls", V = L"aeiou", S = L"s", F = L"mn", L = L"rl";
@@ -18,6 +15,16 @@ namespace NameGen {
 	struct Orthography {
 		std::string name = "Default";
 		std::unordered_map<wchar_t, std::wstring> map;
+	};
+
+	struct Set {
+		std::string name;
+		std::wstring set;
+	};
+
+	struct RegexSet {
+		std::string name;
+		std::vector<std::wregex> regexen;
 	};
 
 	struct Language {
@@ -32,6 +39,7 @@ namespace NameGen {
 		std::vector<std::wstring> names;
 		std::wstring joiner = L" ";
 		size_t maxchar = 12, minchar = 5;
+		std::wstring genitive, definite;
 	};
 
 	Orthography defaultOrthography = {"Default", {
@@ -51,6 +59,63 @@ namespace NameGen {
 		{L'U', L"ú"},
 	}};
 
+	std::vector<Set> consets = {
+		{"Minimal",              L"ptkmnls"},
+		{"English-ish",          L"ptkbdgmnlrsʃzʒʧ"},
+		{"Pirahã (very simple)", L"ptkmnh"},
+		{"Hawaiian-ish",         L"hklmnpwʔ"},
+		{"Greenlandic-ish",      L"ptkqvsgrmnŋlj"},
+		{"Arabic-ish",           L"tksʃdbqɣxmnlrwj"},
+		{"Arabic-lite",          L"tkdgmnsʃ"},
+		{"English-lite",         L"ptkbdgmnszʒʧhjw"}
+	};
+
+	std::vector<Set> vowsets = {
+		{"Standard 5-vowel",  L"aeiou"},
+		{"3-vowel a i u",     L"aiu"},
+		{"Extra A E I",       L"aeiouAEI"},
+		{"Extra U",           L"aeiouU"},
+		{"5-vowel a i u A I", L"aiuAI"},
+		{"3-vowel e o u",     L"eou"},
+		{"Extra A O U",       L"aeiouAOU"}
+	};
+
+	std::vector<Set> lsets = {
+		{"r l",     L"rl"},
+		{"Just r",  L"r"},
+		{"Just l",  L"l"},
+		{"w j",     L"wj"},
+		{"r l w j", L"rlwj"}
+	};
+
+	std::vector<Set> ssets = {
+		{"Just s", L"s"},
+		{"s ʃ",    L"sʃ"},
+		{"s ʃ f",  L"sʃf"}
+	};
+
+	std::vector<Set> fsets = {
+		{"m n",     L"mn"},
+		{"s k",     L"sk"},
+		{"m n ŋ",   L"mnŋ"},
+		{"s ʃ z ʒ", L"sʃzʒ"}
+	};
+
+	std::vector<std::wstring> syllstructs = {
+		L"CVC", L"CVV?C", L"CVVC?", L"CVC?", L"CV", L"VC", L"CVF", L"C?VC", L"CVF?", L"CL?VC", L"CL?VF", L"S?CVC",
+		L"S?CVF", L"S?CVC?", L"C?VF", L"C?VC?", L"C?VF?", L"C?L?VC", L"VC", L"CVL?C?", L"C?VL?C", L"C?VLC?"
+	};
+
+	std::vector<RegexSet> ressets = {
+		{"None", {}},
+		{"Double sounds", {std::wregex(L".*(.)\\1.*")}},
+		{"Doubles and hard clusters", {
+			std::wregex(L".*[sʃf][sʃ].*"),
+			std::wregex(L".*(.)\\1.*"),
+			std::wregex(L".*[rl][rl].*")
+		}}
+	};
+
 	std::wstring Phonemes::operator[](wchar_t type) const {
 		switch (type) {
 			case L'C': return C;
@@ -62,15 +127,8 @@ namespace NameGen {
 		}
 	}
 
-	template <typename T>
-	std::vector<T> shuffled(std::vector<T> vector) {
-		for (size_t i = vector.size() - 1; 0 < i; --i)
-			std::swap(vector[i], vector[randrange(i)]);
-		return vector;
-	}
-
-	template <template <typename...> class C, typename... TArgs, typename T>
-	const T & choose(const C<T, TArgs...> &container, size_t exponent = 1) {
+	template <template <typename...> class C, typename... CArgs, typename T>
+	const T & choose(const C<T, CArgs...> &container, size_t exponent = 1) {
 		return container[floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size())];
 	}
 
@@ -80,6 +138,22 @@ namespace NameGen {
 
 	size_t randrange(size_t high) {
 		return randrange(0, high);
+	}
+
+	template <typename C>
+	C shuffled(C container) {
+		for (size_t i = container.size() - 1; 0 < i; --i)
+			std::swap(container[i], container[randrange(i)]);
+		return container;
+	}
+
+	std::wstring join(const std::vector<std::wstring> &vector, const std::wstring &sep = {}) {
+		if (vector.empty())
+			return {};
+		std::wstring s = vector[0];
+		for (size_t i = 1; i < vector.size(); ++i)
+			s += sep + vector[i];
+		return s;
 	}
 
 	template <typename T>
@@ -188,6 +262,64 @@ namespace NameGen {
 			language.words[key] = ws;
 			return w;
 		}
+	}
+
+	std::wstring makeName(Language &language, const std::string &key = "") {
+		if (language.genitive.empty())
+			language.genitive = getMorpheme(language, "of");
+		if (language.definite.empty())
+			language.definite = getMorpheme(language, "the");
+		for (;;) {
+			std::wstring name;
+			if (rand() % 2 == 0) {
+				name = capitalize(getWord(language, key));
+			} else {
+				std::wstring w1 = capitalize(getWord(language, rand() % 10 < 6? key : ""));
+				std::wstring w2 = capitalize(getWord(language, rand() % 10 < 6? key : ""));
+				if (w1 == w2)
+					continue;
+				if (rand() % 2 == 1)
+					name = join({w1, w2}, language.joiner);
+				else
+					name = join({w1, language.genitive, w2}, language.joiner);
+			}
+			if (rand() % 10 < 1)
+				name = join({language.definite, name}, language.joiner);
+			if (name.size() < language.minchar || language.maxchar < name.size())
+				continue;
+			bool used = false;
+			for (size_t i = 0; i < language.names.size(); ++i) {
+				std::wstring name2 = language.names[i];
+				if (name.find(name2) != std::wstring::npos || name2.find(name) != std::wstring::npos) {
+					used = true;
+					break;
+				}
+			}
+			if (used)
+				continue;
+			language.names.push_back(name);
+			return name;
+		}
+	}
+
+	Language makeOrthoLanguage() {
+		Language language;
+		language.noortho = false;
+		return language;
+	}
+
+	Language makeRandomLanguage() {
+		Language language;
+		language.noortho = language.nomorph = language.nowordpool = false;
+		language.phonemes.C = shuffled(choose(consets, 2).set);
+		language.phonemes.V = shuffled(choose(vowsets, 2).set);
+		language.phonemes.L = shuffled(choose(lsets, 2).set);
+		language.phonemes.S = shuffled(choose(ssets, 2).set);
+		language.phonemes.F = shuffled(choose(fsets, 2).set);
+		language.structure = choose(syllstructs);
+		language.restricts = ressets[2].regexen;
+		language.cortho = choose(corthsets, 2).orth;
+		// ...
 	}
 }
 

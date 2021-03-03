@@ -156,6 +156,39 @@ namespace NameGen {
 			return morph;
 		}
 	}
+
+	std::wstring makeWord(Language &language, const std::string &key) {
+		size_t nsylls = randrange(language.minsyll, language.maxsyll + 1);
+		std::wstring w;
+		std::vector<std::string> keys;
+		keys.resize(nsylls);
+		keys[randrange(nsylls)] = key;
+		for (size_t i = 0; i < nsylls; ++i)
+			w += getMorpheme(language, keys[i]);
+		return w;
+	}
+
+	std::wstring getWord(Language &language, const std::string &key = "") {
+		std::wstring ws = language.words.count(key) == 0? L"" : language.words.at(key);
+		size_t extras = key.empty()? 3 : 2;
+		for (;;) {
+			size_t n = randrange(ws.size() + extras);
+			if (n < ws.size())
+				return std::wstring(1, ws[n]);
+			std::wstring w = makeWord(language, key);
+			bool bad = false;
+			for (const std::pair<const std::string, std::wstring> &pair: language.words)
+				if (pair.second.find(w) != std::wstring::npos) {
+					bad = true;
+					break;
+				}
+			if (bad)
+				continue;
+			ws += w;
+			language.words[key] = ws;
+			return w;
+		}
+	}
 }
 
 #ifdef INCLUDE_MAIN

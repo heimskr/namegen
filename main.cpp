@@ -116,6 +116,69 @@ namespace NameGen {
 		}}
 	};
 
+	std::vector<Orthography> corthsets = {
+		{"Default", {}},
+		{"Slavic", {
+			{L'ʃ', L"š"},
+			{L'ʒ', L"ž"},
+			{L'ʧ', L"č"},
+			{L'ʤ', L"ǧ"},
+			{L'j', L"j"},
+		}},
+		{"German", {
+			{L'ʃ', L"sch"},
+			{L'ʒ', L"zh"},
+			{L'ʧ', L"tsch"},
+			{L'ʤ', L"dz"},
+			{L'j', L"j"},
+			{L'x', L"ch"},
+		}},
+		{"French", {
+			{L'ʃ', L"ch"},
+			{L'ʒ', L"j"},
+			{L'ʧ', L"tch"},
+			{L'ʤ', L"dj"},
+			{L'x', L"kh"},
+		}},
+		{"Chinese (pinyin)", {
+			{L'ʃ', L"x"},
+			{L'ʧ', L"q"},
+			{L'ʤ', L"j"},
+		}},
+	};
+
+	std::vector<Orthography> vorthsets = {
+		{"Ácutes", {}},
+		{"Ümlauts", {
+			{L'A', L"ä"},
+			{L'E', L"ë"},
+			{L'I', L"ï"},
+			{L'O', L"ö"},
+			{L'U', L"ü"},
+		}},
+		{"Welsh", {
+			{L'A', L"â"},
+			{L'E', L"ê"},
+			{L'I', L"y"},
+			{L'O', L"ô"},
+			{L'U', L"w"},
+		}},
+		{"Diphthongs", {
+			{L'A', L"au"},
+			{L'E', L"ei"},
+			{L'I', L"ie"},
+			{L'O', L"ou"},
+			{L'U', L"oo"},
+		}},
+		{"Doubles", {
+			{L'A', L"aa"},
+			{L'E', L"ee"},
+			{L'I', L"ii"},
+			{L'O', L"oo"},
+			{L'U', L"uu"},
+		}},
+	};
+
 	std::wstring Phonemes::operator[](wchar_t type) const {
 		switch (type) {
 			case L'C': return C;
@@ -318,8 +381,14 @@ namespace NameGen {
 		language.phonemes.F = shuffled(choose(fsets, 2).set);
 		language.structure = choose(syllstructs);
 		language.restricts = ressets[2].regexen;
-		language.cortho = choose(corthsets, 2).orth;
-		// ...
+		language.cortho = choose(corthsets, 2);
+		language.vortho = choose(vorthsets, 2);
+		language.minsyll = randrange(1, 3);
+		if (language.structure.size() < 3)
+			++language.minsyll;
+		language.maxsyll = randrange(language.minsyll + 1, 7);
+		language.joiner = std::wstring(1, choose(std::wstring(L"   -")));
+		return language;
 	}
 }
 

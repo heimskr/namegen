@@ -1,3 +1,4 @@
+#include <codecvt>
 #include <cstdio>
 #include <cstdlib>
 #include <ctgmath>
@@ -192,6 +193,10 @@ namespace NameGen {
 		}
 	}
 
+	std::string convert(const std::wstring &wstr) {
+		return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
+	}
+
 	template <template <typename...> class C, typename... CArgs, typename T>
 	const T & choose(const C<T, CArgs...> &container, size_t exponent = 1) {
 		return container.at(floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size()));
@@ -329,7 +334,7 @@ namespace NameGen {
 		}
 	}
 
-	std::wstring makeName(Language &language, const std::string &key = "") {
+	std::string makeName(Language &language, const std::string &key = "") {
 		if (language.genitive.empty())
 			language.genitive = getMorpheme(language, "of");
 		if (language.definite.empty())
@@ -363,7 +368,7 @@ namespace NameGen {
 			if (used)
 				continue;
 			language.names.push_back(name);
-			return name;
+			return convert(name);
 		}
 	}
 
@@ -398,16 +403,7 @@ namespace NameGen {
 int main() {
 	srand(time(nullptr));
 	NameGen::Language random = NameGen::makeRandomLanguage();
-	for (size_t i = 0; i < 10; ++i) {
-		std::wstring name = NameGen::makeName(random);
-		if (printf("[%ls]\n", name.c_str()) < 0) {
-			perror("printf");
-			printf("\e[31m{");
-			for (const wchar_t ch: name)
-				printf(" %x", ch);
-			printf(" }\e[39m\n");
-		}
-		// std::wcout << L"[" << name << L"]" << std::endl;
-	}
+	for (size_t i = 0; i < 32; ++i)
+		std::cout << NameGen::makeName(random) << "\n";
 }
 #endif

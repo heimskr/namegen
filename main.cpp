@@ -1,5 +1,7 @@
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <ctgmath>
+#include <iostream>
 #include <regex>
 #include <unordered_map>
 #include <vector>
@@ -249,7 +251,7 @@ namespace NameGen {
 			std::wstring syllable;
 			for (size_t i = 0; i < language.structure.size(); ++i) {
 				wchar_t ptype = language.structure[i];
-				if (language.structure[i + 1] == L'?') {
+				if (i + 1 != language.structure.size() && language.structure[i + 1] == L'?') {
 					++i;
 					if (rand() % 2 == 0)
 						continue;
@@ -394,6 +396,13 @@ namespace NameGen {
 
 #ifdef INCLUDE_MAIN
 int main() {
-
+	srand(time(nullptr));
+	NameGen::Language random = NameGen::makeRandomLanguage();
+	for (size_t i = 0; i < 10; ++i) {
+		std::wstring name = NameGen::makeName(random);
+		if (printf("[%ls]\n", name.c_str()) < 0)
+			perror("printf");
+		// std::wcout << L"[" << name << L"]" << std::endl;
+	}
 }
 #endif

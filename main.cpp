@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <ctgmath>
 #include <regex>
+#include <unordered_map>
 #include <vector>
 
 #define INCLUDE_MAIN
@@ -9,16 +10,29 @@ size_t randrange(size_t low, size_t high);
 size_t randrange(size_t high);
 
 namespace NameGen {
+	using wregex = std::basic_regex<wchar_t>;
+
 	struct Phonemes {
-		std::string C = "ptkmnls", V = "aeiou", S = "s", F = "mn", L = "rl";
+		std::wstring C = L"ptkmnls", V = L"aeiou", S = L"s", F = L"mn", L = L"rl";
+	};
+
+	struct Orthography {
+		std::string name = "Default";
+		std::unordered_map<wchar_t, std::wstring> map;
 	};
 
 	struct Language {
 		Phonemes phonemes;
-		std::string structure = "CVC";
+		std::wstring structure = L"CVC";
 		size_t exponent = 2;
-		std::vector<std::regex> restricts;
-		// ...
+		std::vector<wregex> restricts;
+		Orthography cortho, vortho;
+		bool noortho = true, nomorph = true, nowordpool = true;
+		size_t minsyll = 1, maxsyll = 1;
+		std::unordered_map<std::string, std::wstring> morphemes, words;
+		std::vector<std::wstring> names;
+		std::wstring joiner = L" ";
+		size_t maxchar = 12, minchar = 5;
 	};
 
 	template <typename T>
@@ -41,7 +55,8 @@ namespace NameGen {
 		return randrange(0, high);
 	}
 
-	std::string capitalize(std::string word) {
+	template <typename T>
+	std::basic_string<T> capitalize(std::basic_string<T> word) {
 		if (!word.empty())
 			word[0] = std::toupper(word[0]);
 		return word;

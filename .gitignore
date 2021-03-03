@@ -1,6 +1,7 @@
 main
 .vscode
 .DS_Store
+*.dSYM
 
 # Prerequisites
 *.d

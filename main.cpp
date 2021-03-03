@@ -271,7 +271,6 @@ namespace NameGen {
 				}
 			if (bad)
 				continue;
-			std::cout << "\e[2;34msyllable[" << convert(syllable) << "]\e[0m\n";
 			return spell(language, syllable);
 		}
 	}
@@ -310,7 +309,6 @@ namespace NameGen {
 		keys.at(randrange(nsylls)) = key;
 		for (size_t i = 0; i < nsylls; ++i)
 			w += getMorpheme(language, keys.at(i));
-		std::cout << "\e[2mword[" << convert(w) << "]\e[0m\n";
 		return w;
 	}
 
@@ -352,7 +350,6 @@ namespace NameGen {
 				std::wstring w2 = capitalize(getWord(language, rand() % 10 < 6? key : ""));
 				if (w1 == w2)
 					continue;
-				std::cout << "\e[2mw1[" << convert(w1) << "], w2[" << convert(w2) << "]\e[0m\n";
 				if (rand() % 2 == 1)
 					name = join({w1, w2}, language.joiner);
 				else
@@ -360,7 +357,6 @@ namespace NameGen {
 			}
 			if (rand() % 10 < 1)
 				name = join({language.definite, name}, language.joiner);
-			std::cout << "\e[2;32mname[" << convert(name) << "]\e[0m\n";
 			if (name.size() < language.minchar || language.maxchar < name.size())
 				continue;
 			bool used = false;
@@ -408,8 +404,11 @@ namespace NameGen {
 #ifdef INCLUDE_MAIN
 int main() {
 	srand(time(nullptr));
-	NameGen::Language random = NameGen::makeRandomLanguage();
-	for (size_t i = 0; i < 10; ++i)
-		std::cout << NameGen::makeName(random) << "\n";
+	for (size_t i = 0; i < 10; ++i) {
+		NameGen::Language random = NameGen::makeRandomLanguage();
+		for (size_t j = 0; j < 4; ++j)
+			std::cout << NameGen::makeName(random) << "\n";
+		std::cout << std::string(20, '-') << "\n";
+	}
 }
 #endif

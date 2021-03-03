@@ -8,10 +8,10 @@ test: main
 	./main
 
 object: main.cpp
-	$(CXX) -std=c++17 main.cpp -lstdc++
+	$(CXX) -std=c++17 -g main.cpp -lstdc++
 
 main: main.cpp
-	$(CXX) -std=c++17 main.cpp -o main -lstdc++
+	$(CXX) -std=c++17 -g main.cpp -o main -lstdc++
 
 clean:
 	rm -f main

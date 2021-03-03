@@ -194,7 +194,7 @@ namespace NameGen {
 
 	template <template <typename...> class C, typename... CArgs, typename T>
 	const T & choose(const C<T, CArgs...> &container, size_t exponent = 1) {
-		return container[floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size())];
+		return container.at(floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size()));
 	}
 
 	size_t randrange(size_t low, size_t high) {
@@ -208,32 +208,32 @@ namespace NameGen {
 	template <typename C>
 	C shuffled(C container) {
 		for (size_t i = container.size() - 1; 0 < i; --i)
-			std::swap(container[i], container[randrange(i)]);
+			std::swap(container.at(i), container.at(randrange(i)));
 		return container;
 	}
 
 	std::wstring join(const std::vector<std::wstring> &vector, const std::wstring &sep = {}) {
 		if (vector.empty())
 			return {};
-		std::wstring s = vector[0];
+		std::wstring s = vector.at(0);
 		for (size_t i = 1; i < vector.size(); ++i)
-			s += sep + vector[i];
+			s += sep + vector.at(i);
 		return s;
 	}
 
 	template <typename T>
 	std::basic_string<T> capitalize(std::basic_string<T> word) {
 		if (!word.empty())
-			word[0] = std::toupper(word[0]);
+			word.at(0) = std::toupper(word.at(0));
 		return word;
 	}
 
-	std::wstring spell(const Language &language, std::wstring syllable) {
+	std::wstring spell(const Language &language, const std::wstring &syllable) {
 		if (language.noortho)
 			return syllable;
 		std::wstring s;
-		for (size_t i = 0; i < language.structure.size(); ++i) {
-			wchar_t c = syllable[i];
+		for (size_t i = 0; i < syllable.size(); ++i) {
+			wchar_t c = syllable.at(i);
 			if (language.cortho.map.count(c) != 0)
 				s += language.cortho.map.at(c);
 			else if (language.vortho.map.count(c) != 0)
@@ -250,8 +250,8 @@ namespace NameGen {
 		for (;;) {
 			std::wstring syllable;
 			for (size_t i = 0; i < language.structure.size(); ++i) {
-				wchar_t ptype = language.structure[i];
-				if (i + 1 != language.structure.size() && language.structure[i + 1] == L'?') {
+				wchar_t ptype = language.structure.at(i);
+				if (i + 1 != language.structure.size() && language.structure.at(i + 1) == L'?') {
 					++i;
 					if (rand() % 2 == 0)
 						continue;
@@ -260,7 +260,7 @@ namespace NameGen {
 			}
 			bool bad = false;
 			for (size_t i = 0; i < language.restricts.size(); ++i)
-				if (std::regex_match(syllable, language.restricts[i])) {
+				if (std::regex_match(syllable, language.restricts.at(i))) {
 					bad = true;
 					break;
 				}
@@ -280,7 +280,7 @@ namespace NameGen {
 		for (;;) {
 			size_t n = randrange(list.size() + extras);
 			if (n < list.size())
-				return std::wstring(1, list[n]);
+				return std::wstring(1, list.at(n));
 			std::wstring morph = makeSyllable(language);
 			bool bad = false;
 			for (const std::pair<const std::string, std::wstring> &pair: language.morphemes)
@@ -301,9 +301,9 @@ namespace NameGen {
 		std::wstring w;
 		std::vector<std::string> keys;
 		keys.resize(nsylls);
-		keys[randrange(nsylls)] = key;
+		keys.at(randrange(nsylls)) = key;
 		for (size_t i = 0; i < nsylls; ++i)
-			w += getMorpheme(language, keys[i]);
+			w += getMorpheme(language, keys.at(i));
 		return w;
 	}
 
@@ -313,7 +313,7 @@ namespace NameGen {
 		for (;;) {
 			size_t n = randrange(ws.size() + extras);
 			if (n < ws.size())
-				return std::wstring(1, ws[n]);
+				return std::wstring(1, ws.at(n));
 			std::wstring w = makeWord(language, key);
 			bool bad = false;
 			for (const std::pair<const std::string, std::wstring> &pair: language.words)
@@ -400,8 +400,13 @@ int main() {
 	NameGen::Language random = NameGen::makeRandomLanguage();
 	for (size_t i = 0; i < 10; ++i) {
 		std::wstring name = NameGen::makeName(random);
-		if (printf("[%ls]\n", name.c_str()) < 0)
+		if (printf("[%ls]\n", name.c_str()) < 0) {
 			perror("printf");
+			printf("\e[31m{");
+			for (const wchar_t ch: name)
+				printf(" %x", ch);
+			printf(" }\e[39m\n");
+		}
 		// std::wcout << L"[" << name << L"]" << std::endl;
 	}
 }

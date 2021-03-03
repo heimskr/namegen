@@ -1,12 +1,12 @@
-CC ?= clang++
+CXX ?= clang++
 
 all: main
 
 object: main.cpp
-	$(CC) -std=c++17 main.cpp
+	$(CXX) -std=c++17 main.cpp -lstdc++
 
 main: main.cpp
-	$(CC) -std=c++17 main.cpp -o main
+	$(CXX) -std=c++17 main.cpp -o main -lstdc++
 
 clean:
 	rm -f main

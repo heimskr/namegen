@@ -42,18 +42,18 @@ namespace NameGen {
 		std::wstring joiner = L" ";
 		size_t maxchar = 12, minchar = 5;
 		std::wstring genitive, definite;
+		std::wstring spell(const std::wstring &syllable) const;
+		std::wstring makeSyllable() const;
+		std::wstring getMorpheme(const std::string &key = "");
+		std::wstring makeWord(const std::string &key);
+		std::wstring getWord(const std::string &key = "");
+		std::string makeName(const std::string &key = "");
 	};
 
 	std::string convert(const std::wstring &);
 	size_t randrange(size_t low, size_t high);
 	size_t randrange(size_t high);
 	std::wstring join(const std::vector<std::wstring> &, const std::wstring &sep = {});
-	std::wstring spell(const Language &language, const std::wstring &syllable);
-	std::wstring makeSyllable(const Language &);
-	std::wstring getMorpheme(Language &, const std::string &key = "");
-	std::wstring makeWord(Language &, const std::string &key);
-	std::wstring getWord(Language &, const std::string &key = "");
-	std::string makeName(Language &, const std::string &key = "");
 	Language makeOrthoLanguage();
 	Language makeRandomLanguage();
 

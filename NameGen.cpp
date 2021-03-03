@@ -1,50 +1,8 @@
-#include <codecvt>
-#include <cstdio>
-#include <cstdlib>
-#include <ctgmath>
 #include <iostream>
-#include <regex>
-#include <unordered_map>
-#include <vector>
 
-#define INCLUDE_MAIN
+#include "NameGen.h"
 
 namespace NameGen {
-	struct Phonemes {
-		std::wstring C = L"ptkmnls", V = L"aeiou", S = L"s", F = L"mn", L = L"rl";
-		std::wstring operator[](wchar_t) const;
-	};
-
-	struct Orthography {
-		std::string name = "Default";
-		std::unordered_map<wchar_t, std::wstring> map;
-	};
-
-	struct Set {
-		std::string name;
-		std::wstring set;
-	};
-
-	struct RegexSet {
-		std::string name;
-		std::vector<std::wregex> regexen;
-	};
-
-	struct Language {
-		Phonemes phonemes;
-		std::wstring structure = L"CVC";
-		size_t exponent = 2;
-		std::vector<std::wregex> restricts;
-		Orthography cortho, vortho;
-		bool noortho = true, nomorph = true, nowordpool = true;
-		size_t minsyll = 1, maxsyll = 1;
-		std::unordered_map<std::string, std::vector<std::wstring>> morphemes, words;
-		std::vector<std::wstring> names;
-		std::wstring joiner = L" ";
-		size_t maxchar = 12, minchar = 5;
-		std::wstring genitive, definite;
-	};
-
 	Orthography defaultOrthography = {"Default", {
 		{L'ʃ', L"sh"},
 		{L'ʒ', L"zh"},
@@ -197,11 +155,6 @@ namespace NameGen {
 		return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
 	}
 
-	template <template <typename...> class C, typename... CArgs, typename T>
-	const T & choose(const C<T, CArgs...> &container, size_t exponent = 1) {
-		return container.at(floor(pow(static_cast<double>(rand()) / static_cast<double>(RAND_MAX), exponent) * container.size()));
-	}
-
 	size_t randrange(size_t low, size_t high) {
 		return (rand() % (high - low)) + low;
 	}
@@ -210,27 +163,13 @@ namespace NameGen {
 		return randrange(0, high);
 	}
 
-	template <typename C>
-	C shuffled(C container) {
-		for (size_t i = container.size() - 1; 0 < i; --i)
-			std::swap(container.at(i), container.at(randrange(i)));
-		return container;
-	}
-
-	std::wstring join(const std::vector<std::wstring> &vector, const std::wstring &sep = {}) {
+	std::wstring join(const std::vector<std::wstring> &vector, const std::wstring &sep) {
 		if (vector.empty())
 			return {};
 		std::wstring s = vector.at(0);
 		for (size_t i = 1; i < vector.size(); ++i)
 			s += sep + vector.at(i);
 		return s;
-	}
-
-	template <typename T>
-	std::basic_string<T> capitalize(std::basic_string<T> word) {
-		if (!word.empty())
-			word.at(0) = std::toupper(word.at(0));
-		return word;
 	}
 
 	std::wstring spell(const Language &language, const std::wstring &syllable) {
@@ -275,7 +214,7 @@ namespace NameGen {
 		}
 	}
 
-	std::wstring getMorpheme(Language &language, const std::string &key = "") {
+	std::wstring getMorpheme(Language &language, const std::string &key) {
 		if (language.nomorph)
 			return makeSyllable(language);
 		std::vector<std::wstring> vec;
@@ -312,7 +251,7 @@ namespace NameGen {
 		return w;
 	}
 
-	std::wstring getWord(Language &language, const std::string &key = "") {
+	std::wstring getWord(Language &language, const std::string &key) {
 		std::vector<std::wstring> ws;
 		if (language.words.count(key) != 0)
 			ws = language.words.at(key);
@@ -336,7 +275,7 @@ namespace NameGen {
 		}
 	}
 
-	std::string makeName(Language &language, const std::string &key = "") {
+	std::string makeName(Language &language, const std::string &key) {
 		if (language.genitive.empty())
 			language.genitive = getMorpheme(language, "of");
 		if (language.definite.empty())
@@ -401,7 +340,7 @@ namespace NameGen {
 	}
 }
 
-#ifdef INCLUDE_MAIN
+#ifdef NAMEGEN_INCLUDE_MAIN
 int main() {
 	srand(time(nullptr));
 	for (size_t i = 0; i < 10; ++i) {

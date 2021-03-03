@@ -7,11 +7,11 @@ all: main
 test: main
 	./main
 
-object: main.cpp
-	$(CXX) -std=c++17 -g main.cpp -lstdc++
+object: NameGen.cpp NameGen.h
+	$(CXX) -std=c++17 -c NameGen.cpp
 
-main: main.cpp
-	$(CXX) -std=c++17 -g main.cpp -o main -lstdc++
+main: NameGen.cpp NameGen.h
+	$(CXX) -std=c++17 -DNAMEGEN_INCLUDE_MAIN NameGen.cpp -o main -lstdc++
 
 clean:
 	rm -f main

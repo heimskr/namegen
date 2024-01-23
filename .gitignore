@@ -1,5 +1,6 @@
-main
-.vscode
+/main
+/.vscode
+/builddir
 .DS_Store
 *.dSYM
 

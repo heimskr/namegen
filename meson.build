@@ -1,5 +1,5 @@
 project('namegen', 'cpp',
-	default_options: ['warning_level=2', 'werror=false', 'cpp_std=c++20'])
+	default_options: ['warning_level=2', 'werror=false', 'cpp_std=c++23'])
 
 namegen_sources = ['NameGen.cpp']
 

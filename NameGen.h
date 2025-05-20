@@ -1,7 +1,7 @@
+#include <cmath>
 #include <codecvt>
 #include <cstdio>
 #include <cstdlib>
-#include <ctgmath>
 #include <random>
 #include <regex>
 #include <unordered_map>
